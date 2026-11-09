@@ -18,7 +18,7 @@ namespace RszTool.App.Views
         {
             if (DataContext is PfbFileViewModel viewModel)
             {
-                viewModel.Changed = true;
+                viewModel.OnEdited();
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using RszTool.App.Common;
 using RszTool.App.Converters;
 
@@ -15,7 +15,7 @@ namespace RszTool.App.ViewModels
     /// <summary>
     /// 字段
     /// </summary>
-    public class BaseRszFieldViewModel(RszInstance instance, int index) : INotifyPropertyChanged
+    public class BaseRszFieldViewModel(RszInstance instance, int index) : INotifyPropertyChanged, IItemsProvider
     {
         protected readonly RszInstance instance = instance;
         public int Index { get; } = index;
@@ -33,6 +33,11 @@ namespace RszTool.App.ViewModels
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        public void NotifyItemsChanged()
+        {
+            OnPropertyChanged("Items");
+        }
 
         protected void OnPropertyChanged(string propertyName)
         {
@@ -77,11 +82,6 @@ namespace RszTool.App.ViewModels
         public override string Name => $"{Field.name} : {Instance.Name}";
         public IEnumerable<object> Items => RszInstanceFieldsConverter.GetItems(Instance);
 
-        public void NotifyItemsChanged()
-        {
-            OnPropertyChanged(nameof(Items));
-        }
-
         public override string ToString()
         {
             return Name;
@@ -112,11 +112,6 @@ namespace RszTool.App.ViewModels
 
         public IEnumerable<object> Items => GetItems();
 
-        public void NotifyItemsChanged()
-        {
-            OnPropertyChanged(nameof(Items));
-        }
-
         public override string ToString()
         {
             return Name;
@@ -128,7 +123,7 @@ namespace RszTool.App.ViewModels
     /// 数组的项
     /// </summary>
     public class BaseRszFieldArrayItemViewModel(
-            RszFieldArrayViewModel array, int index) : INotifyPropertyChanged
+            RszFieldArrayViewModel array, int index) : INotifyPropertyChanged, IItemsProvider
     {
         public RszFieldArrayViewModel Array { get; } = array;
         public int Index { get; } = index;
@@ -145,6 +140,11 @@ namespace RszTool.App.ViewModels
                 Values[Index] = value;
                 PropertyChanged?.Invoke(this, new(nameof(Value)));
             }
+        }
+
+        public void NotifyItemsChanged()
+        {
+            OnPropertyChanged("Items");
         }
 
         protected void OnPropertyChanged(string propertyName)
@@ -177,7 +177,7 @@ namespace RszTool.App.ViewModels
 
         public override string ToString()
         {
-            return $"{Field.DisplayType} {Field.name}[{Index}] = {Value}";;
+            return $"{Field.DisplayType} {Field.name}[{Index}] = {Value}";
         }
     }
 
@@ -191,11 +191,6 @@ namespace RszTool.App.ViewModels
         public RszInstance Instance => (RszInstance)Values[Index];
         public override string Name => $"{Index}: {Instance.Name}";
         public IEnumerable<object> Items => RszInstanceFieldsConverter.GetItems(Instance);
-
-        public void NotifyItemsChanged()
-        {
-            OnPropertyChanged(nameof(Items));
-        }
 
         public override string ToString()
         {

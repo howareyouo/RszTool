@@ -28,24 +28,82 @@ namespace RszTool.App.ViewModels
         public bool Changed
         {
             get => changed;
-            set
+            private set
             {
                 changed = value;
                 HeaderChanged?.Invoke();
             }
         }
-        public event Action<object?>? SelectedSearchResultChanged;
-        public object? SelectedItem { get; set; }
-        private object? selectedSearchResult;
-        public object? SelectedSearchResult
+
+        /// <summary>
+        /// 编辑入口：标记脏，并按需通知受影响的节点
+        /// </summary>
+        public void OnEdited(object? node = null)
         {
-            get => selectedSearchResult;
-            set
+            Changed = true;
+            (node as IItemsProvider)?.NotifyItemsChanged();
+        }
+
+        /// <summary>
+        /// 插入实例：re4 chainsaw.ContextID 修正 + 标记脏
+        /// </summary>
+        public void OnInserted(RszInstance instance, object? node = null)
+        {
+            UpdateInstanceContextID(instance);
+            OnEdited(node);
+        }
+
+        /// <summary>
+        /// 插入游戏对象：re4 chainsaw.ContextID 修正 + 标记脏
+        /// </summary>
+        public void OnGameObjectInserted(IGameObjectData gameObject)
+        {
+            ContextIdFixup.UpdateContextID(RszFileOption!, gameObject);
+            OnEdited();
+        }
+
+        /// <summary>
+        /// 按搜索条件填充游戏对象搜索结果
+        /// </summary>
+        protected static void FillGameObjectSearchList<T>(
+            GameObjectSearchViewModel search, ObservableCollection<T> list, IEnumerable<T> items)
+            where T : IGameObjectData
+        {
+            list.Clear();
+            GameObjectFilter filter = new(search);
+            if (!filter.Enable) return;
+            foreach (var item in items)
             {
-                selectedSearchResult = value;
-                SelectedSearchResultChanged?.Invoke(value);
+                if (filter.IsMatch(item))
+                {
+                    list.Add(item);
+                }
             }
         }
+
+        /// <summary>
+        /// 询问要添加的组件类名，取消或空输入返回 null
+        /// </summary>
+        protected static string? AskClassName(string title, string message, string initial)
+        {
+            Views.InputDialog dialog = new()
+            {
+                Title = title,
+                Message = message,
+                InputText = initial,
+                Owner = Application.Current.MainWindow,
+            };
+            if (dialog.ShowDialog() != true) return null;
+            string className = dialog.InputText;
+            if (string.IsNullOrWhiteSpace(className))
+            {
+                MessageBoxUtils.Error("ClassName is empty");
+                return null;
+            }
+            return className;
+        }
+
+        public object? SelectedItem { get; set; }
         public InstanceSearchViewModel InstanceSearchViewModel { get; } = new();
         public ObservableCollection<RszInstance>? SearchInstanceList { get; set; }
         public RszFileOption? RszFileOption => File.GetRSZ()?.Option;
@@ -75,9 +133,6 @@ namespace RszTool.App.ViewModels
         /// </summary>
         // public event Action<object>? TreeViewItemChanged;
 
-        public static RszInstance? CopiedInstance { get; private set; }
-        public static RszField? CopiedNormalField { get; private set; }
-        public static object? CopiedNormalValue { get; private set; }
 
         public virtual void PostRead() {}
 
@@ -134,22 +189,22 @@ namespace RszTool.App.ViewModels
         /// <param name="gameObject"></param>
         private void UpdateInstanceContextID(RszInstance instance)
         {
-            GameObjectCopyHelper.UpdateInstanceContextID(RszFileOption!, instance);
+            ContextIdFixup.UpdateInstanceContextID(RszFileOption!, instance);
         }
 
         private static void OnCopyInstance(object arg)
         {
             if (arg is RszInstance instance)
             {
-                CopiedInstance = instance;
+                RszClipboard.Instance = instance;
             }
             else if (arg is RszFieldInstanceViewModel fieldInstanceViewModel)
             {
-                CopiedInstance = fieldInstanceViewModel.Instance;
+                RszClipboard.Instance = fieldInstanceViewModel.Instance;
             }
             else if (arg is GameObejctComponentViewModel componentViewModel)
             {
-                CopiedInstance = componentViewModel.Instance;
+                RszClipboard.Instance = componentViewModel.Instance;
             }
         }
 
@@ -159,37 +214,35 @@ namespace RszTool.App.ViewModels
             {
                 if (DoPasteInstance(instance))
                 {
-                    Changed = true;
+                    OnEdited();
                 }
             }
             else if (arg is RszFieldInstanceViewModel fieldInstanceViewModel)
             {
                 if (DoPasteInstance(fieldInstanceViewModel.Instance))
                 {
-                    fieldInstanceViewModel.NotifyItemsChanged();
-                    Changed = true;
+                    OnEdited(fieldInstanceViewModel);
                 }
             }
             else if (arg is GameObejctComponentViewModel componentViewModel)
             {
                 if (DoPasteInstance(componentViewModel.Instance))
                 {
-                    componentViewModel.NotifyItemsChanged();
-                    Changed = true;
+                    OnEdited(componentViewModel);
                 }
             }
         }
 
         private bool DoPasteInstance(RszInstance instance)
         {
-            if (CopiedInstance == null) return false;
-            if (CopiedInstance.RszClass != instance.RszClass)
+            if (RszClipboard.Instance == null) return false;
+            if (RszClipboard.Instance.RszClass != instance.RszClass)
             {
-                MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, CopiedInstance.RszClass.name, instance.RszClass.name));
+                MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, RszClipboard.Instance.RszClass.name, instance.RszClass.name));
                 return false;
             }
             if (File.GetRSZ() is not RSZFile rsz) return false;
-            bool result = rsz.InstanceCopyValues(instance, CopiedInstance);
+            bool result = rsz.InstanceCopyValues(instance, RszClipboard.Instance);
             if (result)
             {
                 UpdateInstanceContextID(instance);
@@ -201,22 +254,22 @@ namespace RszTool.App.ViewModels
         {
             if (arg is RszFieldNormalViewModel item)
             {
-                CopiedNormalField = item.Field;
-                CopiedNormalValue = item.Value;
+                RszClipboard.NormalField = item.Field;
+                RszClipboard.NormalValue = item.Value;
             }
         }
 
         private void OnPasteNormalField(object arg)
         {
-            if (arg is RszFieldNormalViewModel item && CopiedNormalField != null && CopiedNormalValue != null)
+            if (arg is RszFieldNormalViewModel item && RszClipboard.NormalField != null && RszClipboard.NormalValue != null)
             {
-                if (CopiedNormalField.type != item.Field.type)
+                if (RszClipboard.NormalField.type != item.Field.type)
                 {
-                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, CopiedNormalField.type, item.Field.type));
+                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, RszClipboard.NormalField.type, item.Field.type));
                     return;
                 }
-                item.Value = CopiedNormalValue;
-                Changed = true;
+                item.Value = RszClipboard.NormalValue;
+                OnEdited();
             }
         }
 
@@ -224,13 +277,12 @@ namespace RszTool.App.ViewModels
         {
             if (arg is RszFieldArrayInstanceItemViewModel item)
             {
-                CopiedInstance = item.Instance;
-                Console.WriteLine(CopiedInstance?.Stringify());
+                RszClipboard.Instance = item.Instance;
             }
             else if (arg is RszFieldArrayNormalItemViewModel normalItem)
             {
-                CopiedNormalField = normalItem.Field;
-                CopiedNormalValue = normalItem.Value;
+                RszClipboard.NormalField = normalItem.Field;
+                RszClipboard.NormalValue = normalItem.Value;
             }
         }
 
@@ -243,8 +295,7 @@ namespace RszTool.App.ViewModels
             if (arg is BaseRszFieldArrayItemViewModel item && File.GetRSZ() is RSZFile rsz)
             {
                 rsz.ArrayRemoveItem(item.Values, item.Value);
-                item.Array.NotifyItemsChanged();
-                Changed = true;
+                OnEdited(item.Array);
             }
         }
 
@@ -258,15 +309,12 @@ namespace RszTool.App.ViewModels
             if (arg is RszFieldArrayInstanceItemViewModel item)
             {
                 var newItem = rsz.ArrayInsertInstance(item.Values, item.Instance, item.Index + 1);
-                UpdateInstanceContextID(newItem);
-                item.Array.NotifyItemsChanged();
-                Changed = true;
+                OnInserted(newItem, item.Array);
             }
             else if (arg is RszFieldArrayNormalItemViewModel normalItem)
             {
                 rsz.ArrayInsertItem(normalItem.Values, normalItem.Value, normalItem.Index + 1);
-                normalItem.Array.NotifyItemsChanged();
-                Changed = true;
+                OnEdited(normalItem.Array);
             }
         }
 
@@ -295,8 +343,7 @@ namespace RszTool.App.ViewModels
                     var newItem = rsz.ArrayInsertInstance(item.Values, item.Instance, item.Index + 1);
                     UpdateInstanceContextID(newItem);
                 }
-                item.Array.NotifyItemsChanged();
-                Changed = true;
+                OnEdited(item.Array);
             }
             else if (arg is RszFieldArrayNormalItemViewModel normalItem)
             {
@@ -304,8 +351,7 @@ namespace RszTool.App.ViewModels
                 {
                     rsz.ArrayInsertItem(normalItem.Values, normalItem.Value, normalItem.Index + 1);
                 }
-                normalItem.Array.NotifyItemsChanged();
-                Changed = true;
+                OnEdited(normalItem.Array);
             }
         }
 
@@ -316,29 +362,26 @@ namespace RszTool.App.ViewModels
         private void OnArrayItemPasteAfter(object arg)
         {
             if (File.GetRSZ() is not RSZFile rsz) return;
-            if (arg is RszFieldArrayInstanceItemViewModel item && CopiedInstance != null)
+            if (arg is RszFieldArrayInstanceItemViewModel item && RszClipboard.Instance != null)
             {
-                if (CopiedInstance.RszClass != item.Instance.RszClass)
+                if (RszClipboard.Instance.RszClass != item.Instance.RszClass)
                 {
-                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, CopiedInstance.RszClass.name, item.Instance.RszClass.name));
+                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, RszClipboard.Instance.RszClass.name, item.Instance.RszClass.name));
                     return;
                 }
-                var newItem = rsz.ArrayInsertInstance(item.Values, CopiedInstance, item.Index + 1);
-                UpdateInstanceContextID(newItem);
-                item.Array.NotifyItemsChanged();
-                Changed = true;
+                var newItem = rsz.ArrayInsertInstance(item.Values, RszClipboard.Instance, item.Index + 1);
+                OnInserted(newItem, item.Array);
             }
             else if (arg is RszFieldArrayNormalItemViewModel normalItem
-                && CopiedNormalField != null && CopiedNormalValue != null)
+                && RszClipboard.NormalField != null && RszClipboard.NormalValue != null)
             {
-                if (CopiedNormalField.type != normalItem.Field.type)
+                if (RszClipboard.NormalField.type != normalItem.Field.type)
                 {
-                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, CopiedNormalField.type, normalItem.Field.type));
+                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, RszClipboard.NormalField.type, normalItem.Field.type));
                     return;
                 }
-                rsz.ArrayInsertItem(normalItem.Values, CopiedNormalValue, normalItem.Index + 1);
-                normalItem.Array.NotifyItemsChanged();
-                Changed = true;
+                rsz.ArrayInsertItem(normalItem.Values, RszClipboard.NormalValue, normalItem.Index + 1);
+                OnEdited(normalItem.Array);
             }
         }
 
@@ -352,20 +395,19 @@ namespace RszTool.App.ViewModels
             {
                 if (DoPasteInstance(item.Instance))
                 {
-                    item.NotifyItemsChanged();
-                    Changed = true;
+                    OnEdited(item);
                 }
             }
             else if (arg is RszFieldArrayNormalItemViewModel normalItem
-                && CopiedNormalField != null && CopiedNormalValue != null)
+                && RszClipboard.NormalField != null && RszClipboard.NormalValue != null)
             {
-                if (CopiedNormalField.type != normalItem.Field.type)
+                if (RszClipboard.NormalField.type != normalItem.Field.type)
                 {
-                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, CopiedNormalField.type, normalItem.Field.type));
+                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, RszClipboard.NormalField.type, normalItem.Field.type));
                     return;
                 }
-                normalItem.Value = CopiedNormalValue;
-                Changed = true;
+                normalItem.Value = RszClipboard.NormalValue;
+                OnEdited();
             }
         }
 
@@ -401,8 +443,7 @@ namespace RszTool.App.ViewModels
                 {
                     rsz.ArrayInsertItem(item.Values, newItem);
                 }
-                item.NotifyItemsChanged();
-                Changed = true;
+                OnEdited(item);
             }
         }
 
@@ -411,20 +452,18 @@ namespace RszTool.App.ViewModels
         /// </summary>
         private void OnArrayItemPaste(object arg)
         {
-            if (arg is RszFieldArrayViewModel item && CopiedInstance != null &&
+            if (arg is RszFieldArrayViewModel item && RszClipboard.Instance != null &&
                 File.GetRSZ() is RSZFile rsz)
             {
                 string className = RszInstance.GetElementType(item.Field.original_type);
-                if (className != CopiedInstance.RszClass.name &&
+                if (className != RszClipboard.Instance.RszClass.name &&
                     !MessageBoxUtils.Confirm(string.Format(
-                        Texts.RszClassMismatchConfirm, CopiedInstance.RszClass.name, className)))
+                        Texts.RszClassMismatchConfirm, RszClipboard.Instance.RszClass.name, className)))
                 {
                     return;
                 }
-                var newItem = rsz.ArrayInsertInstance(item.Values, CopiedInstance);
-                UpdateInstanceContextID(newItem);
-                item.NotifyItemsChanged();
-                Changed = true;
+                var newItem = rsz.ArrayInsertInstance(item.Values, RszClipboard.Instance);
+                OnInserted(newItem, item);
             }
         }
 
@@ -448,7 +487,8 @@ namespace RszTool.App.ViewModels
     }
 
 
-    public class GameObejctComponentViewModel(IGameObjectData gameObject, RszInstance instance) : BaseViewModel
+    public class GameObejctComponentViewModel(IGameObjectData gameObject, RszInstance instance)
+        : BaseViewModel, IItemsProvider
     {
         public IGameObjectData GameObject { get; } = gameObject;
         public RszInstance Instance { get; } = instance;

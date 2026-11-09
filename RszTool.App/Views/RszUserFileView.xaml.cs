@@ -18,7 +18,7 @@ namespace RszTool.App.Views
         {
             if (DataContext is UserFileViewModel viewModel)
             {
-                viewModel.Changed = true;
+                viewModel.OnEdited();
             }
         }
 

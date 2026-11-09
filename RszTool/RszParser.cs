@@ -32,26 +32,43 @@ namespace RszTool
             classDict = new();
             classNameDict = new();
             using FileStream fileStream = File.OpenRead(jsonPath);
-            var dict = JsonSerializer.Deserialize<Dictionary<string, RszClass>>(fileStream);
-            if (dict != null)
-            {
-                foreach (var item in dict)
-                {
-                    var value = item.Value;
-                    value.typeId = uint.Parse(item.Key, NumberStyles.HexNumber);
-                    classDict[value.typeId] = value;
-                    classNameDict[value.name] = value;
+            LoadClasses(JsonSerializer.Deserialize<Dictionary<string, RszClass>>(fileStream));
+            ReadPatch(jsonPath);
+        }
 
-                    foreach (var field in value.fields)
+        private RszParser()
+        {
+            classDict = new();
+            classNameDict = new();
+        }
+
+        /// <summary>
+        /// 直接用 json 文本构建解析器，不读磁盘，也不进入实例缓存
+        /// </summary>
+        public static RszParser FromJson(string json)
+        {
+            var parser = new RszParser();
+            parser.LoadClasses(JsonSerializer.Deserialize<Dictionary<string, RszClass>>(json));
+            return parser;
+        }
+
+        private void LoadClasses(Dictionary<string, RszClass>? dict)
+        {
+            if (dict == null) return;
+            foreach (var item in dict)
+            {
+                var value = item.Value;
+                value.typeId = uint.Parse(item.Key, NumberStyles.HexNumber);
+                classDict[value.typeId] = value;
+                classNameDict[value.name] = value;
+
+                foreach (var field in value.fields)
+                {
+                    if (field.type == RszFieldType.Data)
                     {
-                        if (field.type == RszFieldType.Data)
-                        {
-                            field.GuessDataType();
-                        }
+                        field.GuessDataType();
                     }
                 }
-
-                ReadPatch(jsonPath);
             }
         }
 

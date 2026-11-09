@@ -54,6 +54,8 @@ namespace RszTool.App.ViewModels
 
         public MainWindowModel()
         {
+            ContextIdFixup.Prompt = items =>
+                new UpdateContextIDWindow { TreeViewItems = items }.ShowDialog();
             foreach (var path in SaveData.OpenedFolders)
             {
                 FileExplorerViewModel.Folders.Add(new(path));

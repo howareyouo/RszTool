@@ -50,21 +50,12 @@ namespace RszTool.App.ViewModels
         public RelayCommand RemoveComponent => new(OnRemoveComponent);
 
         /// <summary>
-        /// Update re4 chainsaw.ContextID
-        /// </summary>
-        /// <param name="gameObject"></param>
-        private void UpdateContextID(IGameObjectData gameObject)
-        {
-            GameObjectCopyHelper.UpdateContextID(ScnFile.Option, gameObject);
-        }
-
-        /// <summary>
         /// 复制游戏对象
         /// </summary>
         /// <param name="arg"></param>
         private static void OnCopyGameObject(object arg)
         {
-            GameObjectCopyHelper.CopyGameObject((ScnFile.GameObjectData)arg);
+            RszClipboard.CopyGameObject((ScnFile.GameObjectData)arg);
         }
 
         /// <summary>
@@ -74,7 +65,7 @@ namespace RszTool.App.ViewModels
         private void OnRemoveFolder(object arg)
         {
             ScnFile.RemoveFolder((ScnFile.FolderData)arg);
-            Changed = true;
+            OnEdited();
         }
 
         /// <summary>
@@ -84,7 +75,7 @@ namespace RszTool.App.ViewModels
         private void OnRemoveGameObject(object arg)
         {
             ScnFile.RemoveGameObject((ScnFile.GameObjectData)arg);
-            Changed = true;
+            OnEdited();
         }
 
         /// <summary>
@@ -93,9 +84,7 @@ namespace RszTool.App.ViewModels
         /// <param name="arg"></param>
         private void OnDuplicateGameObject(object arg)
         {
-            var newGameObject = ScnFile.DuplicateGameObject((ScnFile.GameObjectData)arg);
-            UpdateContextID(newGameObject);
-            Changed = true;
+            OnGameObjectInserted(ScnFile.DuplicateGameObject((ScnFile.GameObjectData)arg));
         }
 
         /// <summary>
@@ -104,13 +93,11 @@ namespace RszTool.App.ViewModels
         /// <param name="arg"></param>
         private void OnPasteGameObject(object arg)
         {
-            var gameObject = GameObjectCopyHelper.GetCopiedScnGameObject();
+            var gameObject = RszClipboard.GetCopiedScnGameObject();
             if (gameObject != null)
             {
-                var newGameObject = ScnFile.ImportGameObject(gameObject);
-                UpdateContextID(newGameObject);
+                OnGameObjectInserted(ScnFile.ImportGameObject(gameObject));
                 OnPropertyChanged(nameof(GameObjects));
-                Changed = true;
             }
         }
 
@@ -120,13 +107,11 @@ namespace RszTool.App.ViewModels
         /// <param name="arg"></param>
         private void OnPasteGameObjectToFolder(object arg)
         {
-            var gameObject = GameObjectCopyHelper.GetCopiedScnGameObject();
+            var gameObject = RszClipboard.GetCopiedScnGameObject();
             if (gameObject != null)
             {
                 var folder = (ScnFile.FolderData)arg;
-                var newGameObject = ScnFile.ImportGameObject(gameObject, folder);
-                UpdateContextID(newGameObject);
-                Changed = true;
+                OnGameObjectInserted(ScnFile.ImportGameObject(gameObject, folder));
             }
         }
 
@@ -136,13 +121,11 @@ namespace RszTool.App.ViewModels
         /// <param name="arg"></param>
         private void OnPasteGameobjectAsChild(object arg)
         {
-            var gameObject = GameObjectCopyHelper.GetCopiedScnGameObject();
+            var gameObject = RszClipboard.GetCopiedScnGameObject();
             if (gameObject != null)
             {
                 var parent = (ScnFile.GameObjectData)arg;
-                var newGameObject = ScnFile.ImportGameObject(gameObject, parent: parent);
-                UpdateContextID(newGameObject);
-                Changed = true;
+                OnGameObjectInserted(ScnFile.ImportGameObject(gameObject, parent: parent));
             }
         }
 
@@ -166,58 +149,40 @@ namespace RszTool.App.ViewModels
             }
             lastInputClassName = dialog.InputText;
             ScnFile.AddFolder(dialog.InputText, arg as ScnFile.FolderData);
-            Changed = true;
+            OnEdited();
         }
 
         private void OnSearchGameObjects(object arg)
         {
             SearchGameObjectList ??= new();
-            SearchGameObjectList.Clear();
-            GameObjectFilter filter = new(GameObjectSearchViewModel);
-            if (!filter.Enable) return;
-            if (ScnFile.GameObjectDatas == null) return;
-            foreach (var gameObject in ScnFile.IterAllGameObjects(GameObjectSearchViewModel.IncludeChildren))
-            {
-                if (filter.IsMatch(gameObject))
-                {
-                    SearchGameObjectList.Add(gameObject);
-                }
-            }
+            FillGameObjectSearchList(
+                GameObjectSearchViewModel,
+                SearchGameObjectList,
+                ScnFile.IterAllGameObjects(GameObjectSearchViewModel.IncludeChildren));
         }
 
         private string lastInputClassName = "";
         private void OnAddComponent(object arg)
         {
             var gameObject = (ScnFile.GameObjectData)arg;
-            Views.InputDialog dialog = new()
-            {
-                Title = Texts.NewItem,
-                Message = Texts.InputClassName,
-                InputText = lastInputClassName,
-                Owner = Application.Current.MainWindow,
-            };
-            if (dialog.ShowDialog() != true) return;
-            lastInputClassName = dialog.InputText;
-            if (string.IsNullOrWhiteSpace(lastInputClassName))
-            {
-                MessageBoxUtils.Error("ClassName is empty");
-                return;
-            }
+            string? className = AskClassName(Texts.NewItem, Texts.InputClassName, lastInputClassName);
+            if (className == null) return;
+            lastInputClassName = className;
             AppUtils.TryActionSimple(() =>
             {
-                ScnFile.AddComponent(gameObject, lastInputClassName);
-                Changed = true;
+                ScnFile.AddComponent(gameObject, className);
+                OnEdited();
             });
         }
 
         private void OnPasteInstanceAsComponent(object arg)
         {
             var gameObject = (ScnFile.GameObjectData)arg;
-            if (CopiedInstance != null && File.GetRSZ() is RSZFile rsz)
+            if (RszClipboard.Instance != null && File.GetRSZ() is RSZFile rsz)
             {
-                RszInstance component = rsz.CloneInstance(CopiedInstance);
+                RszInstance component = rsz.CloneInstance(RszClipboard.Instance);
                 ScnFile.AddComponent(gameObject, component);
-                Changed = true;
+                OnEdited();
             }
         }
 
@@ -226,7 +191,7 @@ namespace RszTool.App.ViewModels
             var item = (GameObejctComponentViewModel)arg;
             if (ScnFile.RemoveComponent(item.GameObject, item.Instance))
             {
-                Changed = true;
+                OnEdited();
             }
         }
     }

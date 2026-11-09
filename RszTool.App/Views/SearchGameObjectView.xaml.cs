@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -30,7 +30,6 @@ namespace RszTool.App.Views
             if (DataContext is BaseRszFileViewModel viewModel)
             {
                 viewModel.SelectedItem = e.NewValue;
-                viewModel.SelectedSearchResult = e.NewValue;
             }
         }
     }

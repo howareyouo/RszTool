@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace RszTool.Common
@@ -86,12 +85,8 @@ namespace RszTool.Common
             floatValue = 0;
             return false;
         }
-
-        public static void Debug(object value, [CallerArgumentExpression(nameof(value))] string? name = null)
-        {
-            Console.WriteLine($"{name} = {value}");
-        }
     }
+
 
     public static class Extensions
     {
@@ -99,17 +94,6 @@ namespace RszTool.Common
         {
             reference.TryGetTarget(out T? target);
             return target;
-        }
-
-        public static int GetIndexOrAdd<T>(this List<T> list, T obj)
-        {
-            int index = list.IndexOf(obj);
-            if (index == -1)
-            {
-                index = list.Count;
-                list.Add(obj);
-            }
-            return index;
         }
 
         public static void AppendIndent(this StringBuilder sb, int indent)

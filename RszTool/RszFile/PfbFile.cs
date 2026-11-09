@@ -326,17 +326,7 @@ namespace RszTool
         /// <param name="gameObject"></param>
         /// <param name="rszInstances"></param>
         public static void CollectGameObjectInstances(GameObjectData gameObject, List<RszInstance> rszInstances)
-        {
-            rszInstances.Add(gameObject.Instance!);
-            foreach (var item in gameObject.Components)
-            {
-                rszInstances.Add(item);
-            }
-            foreach (var child in gameObject.Children)
-            {
-                CollectGameObjectInstances(child, rszInstances);
-            }
-        }
+            => GameObjectTree.CollectInstances(gameObject, rszInstances);
 
         /// <summary>
         /// 迭代GameObject以及子物体的实例和组件实例
@@ -344,20 +334,7 @@ namespace RszTool
         /// <param name="gameObject"></param>
         /// <returns></returns>
         public static IEnumerable<RszInstance> IterGameObjectInstances(GameObjectData gameObject)
-        {
-            yield return gameObject.Instance!;
-            foreach (var item in gameObject.Components)
-            {
-                yield return item;
-            }
-            foreach (var child in gameObject.Children)
-            {
-                foreach (var item in IterGameObjectInstances(child))
-                {
-                    yield return item;
-                }
-            }
-        }
+            => GameObjectTree.IterInstances(gameObject);
 
         public IEnumerable<GameObjectData> IterGameObjects(GameObjectData? parent = null, bool includeChildren = false)
         {

@@ -1,4 +1,4 @@
-﻿<Window x:Class="RszTool.App.MainWindow"
+<Window x:Class="RszTool.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -151,18 +151,6 @@
             <ComboBox ItemsSource="{x:Static rsztool:RszDefines.GameNames}" Grid.Column="1" SelectedValue="{Binding SaveData.GameName}" />
             <ToggleButton Content="{res:Text Dark}" Grid.Column="3" IsChecked="{Binding IsDarkTheme}" />
         </Grid>
-        <!-- <dockablz:Layout Grid.Row="2" Margin="8">
-            <dockablz:Layout.BranchTemplate>
-                <DataTemplate>
-                    <dragablz:TabablzControl Style="{StaticResource TabablzControlStyle}" />
-                </DataTemplate>
-            </dockablz:Layout.BranchTemplate>
-            <dragablz:TabablzControl Style="{StaticResource TabablzControlStyle}">
-                <TabItem Header="Tab No. 1" IsSelected="True">
-                    <views:RszTestView/>
-                </TabItem>
-            </dragablz:TabablzControl>
-        </dockablz:Layout> -->
         <Grid Grid.Row="2" Cursor="">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200" MinWidth="200" />

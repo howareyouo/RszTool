@@ -10,11 +10,7 @@ namespace RszTool.App.Common
 
         public bool CanExecute(object? parameter)
         {
-            if (CanExecution != null)
-            {
-                CanExecute(parameter);
-            }
-            return true;
+            return CanExecution?.Invoke(parameter!) ?? true;
         }
 
         public void Execute(object? parameter)

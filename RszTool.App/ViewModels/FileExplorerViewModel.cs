@@ -84,12 +84,11 @@ namespace RszTool.App.ViewModels
     }
 
 
+    /// <summary>
+    /// 目录树节点，只管界面状态，列举交给 FolderListing
+    /// </summary>
     public class DirectoryItem(string path) : BaseFileItem(path)
     {
-        private static readonly IComparer<BaseFileItem> comparer =
-            Comparer<BaseFileItem>.Create((x, y) => x.Name.CompareTo(y.Name));
-        private static readonly HashSet<string> Filter = new() { ".pfb", ".scn", ".user" };
-
         private ObservableCollection<BaseFileItem>? children;
 
         public ObservableCollection<BaseFileItem> Children
@@ -105,58 +104,35 @@ namespace RszTool.App.ViewModels
             }
         }
 
+        /// <summary>
+        /// 重建子节点，已有的节点实例保留，展开状态不丢
+        /// </summary>
         public void Refresh()
         {
             if (children == null) return;
-            // Console.WriteLine($"Refresh {Path}");
-            List<BaseFileItem> items = new();
-            Dictionary<string, BaseFileItem> childDict = new();
-            foreach (BaseFileItem item in children)
+            Dictionary<string, BaseFileItem> existing = new();
+            foreach (var item in children)
             {
-                childDict[item.Path] = item;
+                existing[item.Path] = item;
             }
             children.Clear();
-            int directoryCount = 0;
-            foreach (var childPath in Directory.EnumerateDirectories(Path))
+            var entries = FolderListing.List(Path);
+            foreach (var entry in entries)
             {
-                if (childDict.TryGetValue(childPath, out var fileItem) && fileItem is DirectoryItem directoryItem)
+                if (!existing.TryGetValue(entry.Path, out var item))
                 {
-                    items.Add(fileItem);
-                    directoryItem.Refresh();
+                    item = entry.IsDirectory ? new DirectoryItem(entry.Path) : new FileItem(entry.Path);
                 }
-                else
-                {
-                    items.Add(new DirectoryItem(childPath));
-                }
-                directoryCount++;
+                children.Add(item);
             }
-            foreach (var childPath in Directory.EnumerateFiles(Path))
+            if (entries.Count == 1 && entries[0].IsDirectory && children[0] is DirectoryItem onlyDirectory)
             {
-                RszUtils.GetFileExtension(childPath, out string extension, out _);
-                if (!Filter.Contains(extension)) continue;
-                if (childDict.TryGetValue(childPath, out var fileItem) && fileItem is FileItem)
-                {
-                    items.Add(fileItem);
-                }
-                else
-                {
-                    items.Add(new FileItem(childPath));
-                }
+                onlyDirectory.IsExpanded = true;
             }
-            items.Sort(0, directoryCount, comparer);
-            items.Sort(directoryCount, items.Count - directoryCount, comparer);
-            if (directoryCount == 1)
+            // 只顺着已经展开过的子树往下走，未展开的节点仍是惰性
+            foreach (var item in children)
             {
-                items[0].IsExpanded = true;
-                ((DirectoryItem)items[0]).Refresh();
-            }
-            foreach (var item in items)
-            {
-                if (item is DirectoryItem directoryItem)
-                {
-                    directoryItem.Refresh();
-                }
-                Children.Add(item);
+                if (item is DirectoryItem directory) directory.Refresh();
             }
         }
     }

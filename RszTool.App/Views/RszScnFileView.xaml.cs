@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using RszTool.App.ViewModels;
 
@@ -18,7 +18,7 @@ namespace RszTool.App.Views
         {
             if (DataContext is ScnFileViewModel viewModel)
             {
-                viewModel.Changed = true;
+                viewModel.OnEdited();
             }
         }
 
@@ -27,7 +27,6 @@ namespace RszTool.App.Views
             if (DataContext is ScnFileViewModel viewModel)
             {
                 viewModel.ResourceChanged = true;
-                Console.WriteLine("OnResourceChanged");
             }
         }
     }
