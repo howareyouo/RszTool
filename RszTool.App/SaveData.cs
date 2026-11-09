@@ -15,6 +15,7 @@ namespace RszTool.App
         public List<string> OpenedFolders { get; set; } = new();
         public ContextIDData LastContextID { get; set; } = new();
         public bool IsDarkTheme { get; set; }
+        public WindowPlacement Window { get; set; } = new();
 
         public void AddRecentFile(string path)
         {
@@ -39,5 +40,18 @@ namespace RszTool.App
         public string Text => $"Last ContextID Index: {Index} Group: {Group}";
 
         public event PropertyChangedEventHandler? PropertyChanged;
+    }
+
+
+    /// <summary>
+    /// 主窗口的位置和大小，用于下次启动时恢复
+    /// </summary>
+    public class WindowPlacement
+    {
+        public double? Left { get; set; }
+        public double? Top { get; set; }
+        public double? Width { get; set; }
+        public double? Height { get; set; }
+        public bool Maximized { get; set; }
     }
 }
