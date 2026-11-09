@@ -26,6 +26,11 @@ namespace RszTool.App
             // XAML 里的 Width/Height 要在 InitializeComponent 之后才会生效，
             // 而 SourceInitialized 早于首次绘制，在这里恢复可以避免窗口先闪一下默认尺寸
             SourceInitialized += (_, _) => RestorePlacement();
+            // WindowState 在 SourceInitialized 里设会被 WPF 随后的窗口显示流程重置，只能等到 Loaded
+            Loaded += (_, _) =>
+            {
+                if (App.Instance.SaveData.Window.Maximized) WindowState = WindowState.Maximized;
+            };
             Closing += OnClosing;
         }
 
@@ -51,9 +56,6 @@ namespace RszTool.App
             {
                 WindowStartupLocation = WindowStartupLocation.CenterScreen;
             }
-
-            // 最大化要放在最后，否则上面的尺寸赋值会把窗口拉回普通状态
-            if (placement.Maximized) WindowState = WindowState.Maximized;
         }
 
         /// <summary>
