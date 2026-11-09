@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -30,6 +30,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RszTool\RszTool.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\RszTool\DotNetPatch\Feature.cs" Link="DotNetPatch\Feature.cs" />
   </ItemGroup>
 
   <ItemGroup>
