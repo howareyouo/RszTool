@@ -40,4 +40,81 @@
         <Setter Property="Background" Value="{DynamicResource PrimaryBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource PrimaryForeground}" />
     </Style>
+
+    <!-- ScrollBar: slim bar without line buttons, 8px thick -->
+    <SolidColorBrush x:Key="ScrollBarBackground" Color="Transparent"/>
+    <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#C8C8C8"/>
+    <SolidColorBrush x:Key="ScrollBarThumbHoverBackground" Color="#A0A0A0"/>
+    <SolidColorBrush x:Key="ScrollBarThumbDraggingBackground" Color="#808080"/>
+
+    <Style x:Key="ScrollBarThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Border x:Name="ThumbBorder" Background="{DynamicResource ScrollBarThumbBackground}"
+                            CornerRadius="3" Margin="1"/>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ThumbBorder" Property="Background"
+                                    Value="{DynamicResource ScrollBarThumbHoverBackground}"/>
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="ThumbBorder" Property="Background"
+                                    Value="{DynamicResource ScrollBarThumbDraggingBackground}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type ScrollBar}">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Background" Value="{DynamicResource ScrollBarBackground}"/>
+        <Setter Property="Width" Value="8"/>
+        <Setter Property="MinWidth" Value="8"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ScrollBar}">
+                    <Border Background="{TemplateBinding Background}">
+                        <Track x:Name="PART_Track" IsDirectionReversed="True">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton x:Name="PageUpButton" Command="{x:Static ScrollBar.PageUpCommand}"
+                                              Focusable="False" IsTabStop="False" Opacity="0"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb x:Name="Thumb" Style="{StaticResource ScrollBarThumbStyle}" MinHeight="20"/>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton x:Name="PageDownButton" Command="{x:Static ScrollBar.PageDownCommand}"
+                                              Focusable="False" IsTabStop="False" Opacity="0"/>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter TargetName="PART_Track" Property="Orientation" Value="Horizontal"/>
+                            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+                            <Setter TargetName="Thumb" Property="MinHeight" Value="0"/>
+                            <Setter TargetName="Thumb" Property="MinWidth" Value="20"/>
+                            <Setter TargetName="PageUpButton" Property="Command"
+                                    Value="{x:Static ScrollBar.PageLeftCommand}"/>
+                            <Setter TargetName="PageDownButton" Property="Command"
+                                    Value="{x:Static ScrollBar.PageRightCommand}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto"/>
+                <Setter Property="MinWidth" Value="0"/>
+                <Setter Property="Height" Value="8"/>
+                <Setter Property="MinHeight" Value="8"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
 </ResourceDictionary>

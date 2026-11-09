@@ -50,9 +50,9 @@
     <SolidColorBrush x:Key="DisabledBackgroundBrush" Color="#555555"/>
     <SolidColorBrush x:Key="DisabledBorderBrush" Color="#686868"/>
     <SolidColorBrush x:Key="DisabledForegroundBrush" Color="#808080"/>
-    <SolidColorBrush x:Key="ScrollBarBackground" Color="#2E2E2E"/>
-    <!-- <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#4D4D4D"/>
-    <SolidColorBrush x:Key="ScrollBarThumbPressBackground" Color="#999999"/> -->
+    <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#4D4D4D"/>
+    <SolidColorBrush x:Key="ScrollBarThumbHoverBackground" Color="#6A6A6A"/>
+    <SolidColorBrush x:Key="ScrollBarThumbDraggingBackground" Color="#999999"/>
 
     <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightLightBrushKey}" Color="#333337" />
     <SolidColorBrush x:Key="{x:Static SystemColors.ControlLightBrushKey}" Color="#464646" />
@@ -347,11 +347,6 @@
                 <Setter Property="BorderBrush" Value="{StaticResource ActiveBorder}" />
             </Trigger>
         </Style.Triggers>
-    </Style>
-
-    <!-- ScrollBar -->
-    <Style TargetType="ScrollBar">
-        <Setter Property="Background" Value="{StaticResource ScrollBarBackground}" />
     </Style>
 
     <!-- ContextMenu -->
