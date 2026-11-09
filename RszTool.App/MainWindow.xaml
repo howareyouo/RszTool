@@ -140,10 +140,10 @@
                     <MenuItem.Header><Ellipse Width="10" Height="10" Fill="Purple" /></MenuItem.Header>
                 </MenuItem>
             </MenuItem>
+            <MenuItem Header="{res:Text GameVersion}"
+                      ItemsSource="{Binding GameVersions}"
+                      ItemContainerStyle="{StaticResource GameNameMenuItemStyle}" />
             <MenuItem Header="{res:Text Options}">
-                <MenuItem ItemsSource="{Binding GameVersions}"
-                          ItemContainerStyle="{StaticResource GameNameMenuItemStyle}" />
-                <Separator />
                 <MenuItem Header="{res:Text Dark}" IsCheckable="True" IsChecked="{Binding IsDarkTheme}" />
             </MenuItem>
             <MenuItem Header="{res:Text Help}">
