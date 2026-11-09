@@ -31,13 +31,7 @@ namespace RszTool
         public const string Extension = ".2";
         public const string Extension2 = ".user";
 
-        public string? GetVersionExt()
-        {
-            return Option.GameName switch
-            {
-                _ => Extension
-            };
-        }
+        public string? GetVersionExt() => Extension;
 
         public override RSZFile? GetRSZ() => RSZ;
 

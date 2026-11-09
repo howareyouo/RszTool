@@ -44,7 +44,6 @@ namespace RszTool
             FileHandler.Seek(0);
             bool result = DoRead();
             Size = FileHandler.Tell();
-            // Console.WriteLine($"{this} Start: {Start}, Read size: {Size}");
             return result;
         }
 
@@ -53,7 +52,6 @@ namespace RszTool
             FileHandler.Seek(0);
             bool result = DoWrite();
             Size = FileHandler.Tell();
-            // Console.WriteLine($"{this} Start: {Start}, Write size: {Size}");
             return result;
         }
 

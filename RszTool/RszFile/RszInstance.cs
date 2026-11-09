@@ -81,7 +81,6 @@ namespace RszTool
             if (RSZUserData != null || RszClass.fields.Length == 0) return true;
 
             AlignFirstField(handler);
-            // Console.WriteLine($"read {Name} at: {handler.Position:X}");
             for (int i = 0; i < RszClass.fields.Length; i++)
             {
                 Values[i] = ReadRszField(handler, i);
@@ -100,7 +99,6 @@ namespace RszTool
         {
             RszField field = RszClass.fields[index];
             handler.Align(field.array ? 4 : field.align);
-            // Console.WriteLine($"    read at: {handler.Position:X} {field.original_type} {field.name}");
             if (field.array)
             {
                 int count = handler.ReadInt();
@@ -402,7 +400,6 @@ namespace RszTool
             // if has RSZUserData, it is external
             if (RSZUserData != null || RszClass.fields.Length == 0) return true;
             AlignFirstField(handler);
-            // Console.WriteLine($"write {Name} at: {(handler.Offset + handler.Tell()):X}");
             for (int i = 0; i < RszClass.fields.Length; i++)
             {
                 WriteRszField(handler, i);
@@ -420,7 +417,6 @@ namespace RszTool
         {
             RszField field = RszClass.fields[index];
             handler.Align(field.array ? 4 : field.align);
-            // Console.WriteLine($"    write at: {handler.Position:X} {field.original_type} {field.name}");
             if (field.array)
             {
                 List<object> list = (List<object>)Values[index];
