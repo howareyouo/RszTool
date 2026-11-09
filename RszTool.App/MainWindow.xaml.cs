@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -23,7 +23,9 @@ namespace RszTool.App
             Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version!;
             Title = $"{Title} v{version.Major}.{version.Minor}.{version.Build} - By chenstack";
 
-            RestorePlacement();
+            // XAML 里的 Width/Height 要在 InitializeComponent 之后才会生效，
+            // 而 SourceInitialized 早于首次绘制，在这里恢复可以避免窗口先闪一下默认尺寸
+            SourceInitialized += (_, _) => RestorePlacement();
             Closing += OnClosing;
         }
 
