@@ -7,33 +7,31 @@ namespace RszTool.App.Common
     {
         public static void TryAction(Action action, [CallerMemberName] string name = "")
         {
-            if (Debugger.IsAttached)
-            {
-                action();
-            }
-            else try
-            {
-                action();
-            }
-            catch (Exception e)
-            {
-                App.ShowUnhandledException(e, name);
-            }
+            Guard(action, e => App.ShowUnhandledException(e, name));
         }
 
         public static void TryActionSimple(Action action)
         {
+            Guard(action, e => MessageBoxUtils.Error(e.Message));
+        }
+
+        /// <summary>
+        /// 调试时让异常直接抛出，否则交给调用方处理
+        /// </summary>
+        private static void Guard(Action action, Action<Exception> onError)
+        {
             if (Debugger.IsAttached)
             {
                 action();
+                return;
             }
-            else try
+            try
             {
                 action();
             }
             catch (Exception e)
             {
-                MessageBoxUtils.Error(e.Message);
+                onError(e);
             }
         }
     }
