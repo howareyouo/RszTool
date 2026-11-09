@@ -81,7 +81,6 @@ namespace RszTool
             if (RSZUserData != null || RszClass.fields.Length == 0) return true;
 
             AlignFirstField(handler);
-            // Console.WriteLine($"read {Name} at: {handler.Position:X}");
             for (int i = 0; i < RszClass.fields.Length; i++)
             {
                 Values[i] = ReadRszField(handler, i);
@@ -100,7 +99,6 @@ namespace RszTool
         {
             RszField field = RszClass.fields[index];
             handler.Align(field.array ? 4 : field.align);
-            // Console.WriteLine($"    read at: {handler.Position:X} {field.original_type} {field.name}");
             if (field.array)
             {
                 int count = handler.ReadInt();
@@ -392,73 +390,6 @@ namespace RszTool
             };
         }
 
-        /*
-        private static readonly Dictionary<Type, RszFieldType> CSharpTypeToRszFieldFieldTypeDict = new()
-        {
-            [typeof(string)] = RszFieldType.String,
-            [typeof(int)] = RszFieldType.S32,
-            [typeof(uint)] = RszFieldType.U32,
-            [typeof(long)] = RszFieldType.S64,
-            [typeof(ulong)] = RszFieldType.U64,
-            [typeof(float)] = RszFieldType.F32,
-            [typeof(double)] = RszFieldType.F64,
-            [typeof(bool)] = RszFieldType.Bool,
-            [typeof(sbyte)] = RszFieldType.S8,
-            [typeof(byte)] = RszFieldType.U8,
-            [typeof(short)] = RszFieldType.S16,
-            [typeof(ushort)] = RszFieldType.U16,
-            [typeof(byte[])] = RszFieldType.Data,
-            [typeof(via.mat4)] = RszFieldType.Mat4,
-            [typeof(Vector2)] = RszFieldType.Vec2,
-            [typeof(Vector3)] = RszFieldType.Vec3,
-            [typeof(Vector4)] = RszFieldType.Vec4,
-            [typeof(via.Int2)] = RszFieldType.Int2,
-            [typeof(via.Int3)] = RszFieldType.Int3,
-            [typeof(via.Int4)] = RszFieldType.Int4,
-            [typeof(via.Uint2)] = RszFieldType.Uint2,
-            [typeof(via.Uint3)] = RszFieldType.Uint3,
-            [typeof(via.Uint4)] = RszFieldType.Uint4,
-            [typeof(via.OBB)] = RszFieldType.OBB,
-            [typeof(via.AABB)] = RszFieldType.AABB,
-            [typeof(Guid)] = RszFieldType.Guid,
-            [typeof(Color)] = RszFieldType.Color,
-            [typeof(via.Range)] = RszFieldType.Range,
-            [typeof(via.RangeI)] = RszFieldType.RangeI,
-            [typeof(Quaternion)] = RszFieldType.Quaternion,
-            [typeof(via.Sphere)] = RszFieldType.Sphere,
-            [typeof(via.Capsule)] = RszFieldType.Capsule,
-            [typeof(via.Area)] = RszFieldType.Area,
-            [typeof(via.TaperedCapsule)] = RszFieldType.TaperedCapsule,
-            [typeof(via.Cone)] = RszFieldType.Cone,
-            [typeof(via.Line)] = RszFieldType.Line,
-            [typeof(via.LineSegment)] = RszFieldType.LineSegment,
-            [typeof(via.Plane)] = RszFieldType.Plane,
-            [typeof(via.PlaneXZ)] = RszFieldType.PlaneXZ,
-            [typeof(via.Size)] = RszFieldType.Size,
-            [typeof(via.Ray)] = RszFieldType.Ray,
-            [typeof(via.RayY)] = RszFieldType.RayY,
-            [typeof(via.Segment)] = RszFieldType.Segment,
-            [typeof(via.Triangle)] = RszFieldType.Triangle,
-            [typeof(via.Cylinder)] = RszFieldType.Cylinder,
-            [typeof(via.Ellipsoid)] = RszFieldType.Ellipsoid,
-            [typeof(via.Torus)] = RszFieldType.Torus,
-            [typeof(via.Rect)] = RszFieldType.Rect,
-            [typeof(via.Rect3D)] = RszFieldType.Rect3D,
-            [typeof(via.Frustum)] = RszFieldType.Frustum,
-            [typeof(via.KeyFrame)] = RszFieldType.KeyFrame,
-            [typeof(via.sfix)] = RszFieldType.Sfix,
-            [typeof(via.Sfix2)] = RszFieldType.Sfix2,
-            [typeof(via.Sfix3)] = RszFieldType.Sfix3,
-            [typeof(via.Sfix4)] = RszFieldType.Sfix4,
-        };
-
-        public static RszFieldType CSharpTypeToRszFieldFieldType(Type type)
-        {
-            RszFieldType fieldType = RszFieldType.ukn_type;
-            CSharpTypeToRszFieldFieldTypeDict.TryGetValue(type, out fieldType);
-            return fieldType;
-        } */
-
         /// <summary>
         /// 写入数据
         /// </summary>
@@ -469,7 +400,6 @@ namespace RszTool
             // if has RSZUserData, it is external
             if (RSZUserData != null || RszClass.fields.Length == 0) return true;
             AlignFirstField(handler);
-            // Console.WriteLine($"write {Name} at: {(handler.Offset + handler.Tell()):X}");
             for (int i = 0; i < RszClass.fields.Length; i++)
             {
                 WriteRszField(handler, i);
@@ -487,7 +417,6 @@ namespace RszTool
         {
             RszField field = RszClass.fields[index];
             handler.Align(field.array ? 4 : field.align);
-            // Console.WriteLine($"    write at: {handler.Position:X} {field.original_type} {field.name}");
             if (field.array)
             {
                 List<object> list = (List<object>)Values[index];

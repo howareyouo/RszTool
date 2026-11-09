@@ -44,7 +44,6 @@ namespace RszTool
             FileHandler.Seek(0);
             bool result = DoRead();
             Size = FileHandler.Tell();
-            // Console.WriteLine($"{this} Start: {Start}, Read size: {Size}");
             return result;
         }
 
@@ -53,7 +52,6 @@ namespace RszTool
             FileHandler.Seek(0);
             bool result = DoWrite();
             Size = FileHandler.Tell();
-            // Console.WriteLine($"{this} Start: {Start}, Write size: {Size}");
             return result;
         }
 
@@ -121,6 +119,41 @@ namespace RszTool
         {
             // 内部偏移是从0开始算的
             return rsz.WriteTo(FileHandler.WithOffset(offset));
+        }
+
+        /// <summary>
+        /// 添加组件
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="className"></param>
+        public void AddComponent(IGameObjectData gameObject, string className)
+        {
+            var component = GetRSZ()!.CreateInstance(className);
+            gameObject.Components.Add(component);
+            StructChanged = true;
+        }
+
+        /// <summary>
+        /// 添加组件
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="component"></param>
+        public void AddComponent(IGameObjectData gameObject, RszInstance component)
+        {
+            gameObject.Components.Add(component);
+            StructChanged = true;
+        }
+
+        /// <summary>
+        /// 移除组件
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <param name="component"></param>
+        public bool RemoveComponent(IGameObjectData gameObject, RszInstance component)
+        {
+            bool result = gameObject.Components.Remove(component);
+            if (result) StructChanged = true;
+            return result;
         }
     }
 }

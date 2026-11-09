@@ -486,22 +486,6 @@ namespace RszTool
         }
 
         /// <summary>
-        /// 收集GameObject以及子物体的实例和组件实例
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="rszInstances"></param>
-        public static void CollectGameObjectInstances(GameObjectData gameObject, List<RszInstance> rszInstances)
-            => GameObjectTree.CollectInstances(gameObject, rszInstances);
-
-        /// <summary>
-        /// 迭代GameObject以及子物体的实例和组件实例
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <returns></returns>
-        public static IEnumerable<RszInstance> IterGameObjectInstances(GameObjectData gameObject)
-            => GameObjectTree.IterInstances(gameObject);
-
-        /// <summary>
         /// 收集Folder以及子Folder的实例和组件实例
         /// </summary>
         /// <param name="gameObject"></param>
@@ -511,7 +495,7 @@ namespace RszTool
             rszInstances.Add(folder.Instance!);
             foreach (var gameObject in folder.GameObjects)
             {
-                CollectGameObjectInstances(gameObject, rszInstances);
+                GameObjectTree.CollectInstances(gameObject, rszInstances);
             }
             foreach (var child in folder.Children)
             {
@@ -529,7 +513,7 @@ namespace RszTool
             yield return folder.Instance!;
             foreach (var gameObject in folder.GameObjects)
             {
-                foreach (var item in IterGameObjectInstances(gameObject))
+                foreach (var item in GameObjectTree.IterInstances(gameObject))
                 {
                     yield return item;
                 }
@@ -566,7 +550,7 @@ namespace RszTool
             {
                 foreach (var gameObjectData in GameObjectDatas)
                 {
-                    CollectGameObjectInstances(gameObjectData, rszInstances);
+                    GameObjectTree.CollectInstances(gameObjectData, rszInstances);
                 }
             }
 
@@ -859,9 +843,6 @@ namespace RszTool
             GameObjectData? gameObject = FindGameObject(name);
             if (gameObject == null) return false;
 
-            List<RszInstance> rszInstances = new();
-            CollectGameObjectInstances(gameObject, rszInstances);
-
             // 这里有拷贝instance
             pfbFile.PfbFromScnGameObject(gameObject);
             pfbFile.RSZ!.Header.Data.version = RSZ!.Header.Data.version;
@@ -876,7 +857,7 @@ namespace RszTool
         {
             Dictionary<Guid, List<GameObjectRefData>>? gameObjectRefDatas = null;
             // record GameObjectRef
-            foreach (var item in IterGameObjectInstances(rootGameObject))
+            foreach (var item in GameObjectTree.IterInstances(rootGameObject))
             {
                 if (item.RszClass.name == "via.GameObject") continue;
                 foreach (var instance in item.Flatten())
@@ -971,7 +952,7 @@ namespace RszTool
 
             // 为了可视化重新排序号，否则会显示序号是-1，但实际上保存的时候的序号和现在编号的可能不一致
             // 所以要考虑这步操作是否有必要
-            RSZ!.FixInstanceListIndex(IterGameObjectInstances(newGameObject));
+            RSZ!.FixInstanceListIndex(GameObjectTree.IterInstances(newGameObject));
 
             if (isDuplicate)
             {
@@ -1032,41 +1013,6 @@ namespace RszTool
             }
             AddFolderInfoRecursion(folder);
             StructChanged = true;
-        }
-
-        /// <summary>
-        /// 添加组件
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="className"></param>
-        public void AddComponent(IGameObjectData gameObject, string className)
-        {
-            var component = RSZ!.CreateInstance(className);
-            gameObject.Components.Add(component);
-            StructChanged = true;
-        }
-
-        /// <summary>
-        /// 添加组件
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="component"></param>
-        public void AddComponent(IGameObjectData gameObject, RszInstance component)
-        {
-            gameObject.Components.Add(component);
-            StructChanged = true;
-        }
-
-        /// <summary>
-        /// 移除组件
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="component"></param>
-        public bool RemoveComponent(IGameObjectData gameObject, RszInstance component)
-        {
-            bool result = gameObject.Components.Remove(component);
-            if (result) StructChanged = true;
-            return result;
         }
     }
 

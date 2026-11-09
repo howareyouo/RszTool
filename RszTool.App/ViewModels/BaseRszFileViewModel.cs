@@ -128,11 +128,6 @@ namespace RszTool.App.ViewModels
         /// </summary>
         public event Action? HeaderChanged;
 
-        /// <summary>
-        /// Item改变了，但Item本身不支持Notify，Items用了Convert的情况，通知TreeView更新
-        /// </summary>
-        // public event Action<object>? TreeViewItemChanged;
-
 
         public virtual void PostRead() {}
 
