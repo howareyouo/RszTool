@@ -546,14 +546,5 @@ namespace RszTool.App.Resources {
                 return ResourceManager.GetString("Options", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   查找类似 Game version 的本地化字符串。
-        /// </summary>
-        internal static string GameVersion {
-            get {
-                return ResourceManager.GetString("GameVersion", resourceCulture);
-            }
-        }
     }
 }

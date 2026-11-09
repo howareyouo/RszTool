@@ -141,10 +141,8 @@
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="{res:Text Options}">
-                <MenuItem Header="{res:Text GameVersion}">
-                    <MenuItem ItemsSource="{Binding GameVersions}"
-                              ItemContainerStyle="{StaticResource GameNameMenuItemStyle}" />
-                </MenuItem>
+                <MenuItem ItemsSource="{Binding GameVersions}"
+                          ItemContainerStyle="{StaticResource GameNameMenuItemStyle}" />
                 <Separator />
                 <MenuItem Header="{res:Text Dark}" IsCheckable="True" IsChecked="{Binding IsDarkTheme}" />
             </MenuItem>

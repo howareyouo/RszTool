@@ -280,7 +280,4 @@
   <data name="Options" xml:space="preserve">
     <value>选项</value>
   </data>
-  <data name="GameVersion" xml:space="preserve">
-    <value>游戏版本</value>
-  </data>
 </root>

@@ -280,7 +280,4 @@ Currently, user, scn, pfb files are supported</value>
   <data name="Options" xml:space="preserve">
     <value>Options</value>
   </data>
-  <data name="GameVersion" xml:space="preserve">
-    <value>Game version</value>
-  </data>
 </root>
