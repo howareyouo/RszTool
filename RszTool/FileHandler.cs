@@ -13,8 +13,6 @@ namespace RszTool
         public long Offset { get; set; }
         public bool IsMemory => Stream is MemoryStream;
         private StringTable? StringTable;
-        private OffsetContentTable? OffsetContentTable;
-        private Sunday? searcher = new();
 
         public long Position => Stream.Position;
 
@@ -73,17 +71,6 @@ namespace RszTool
                 Stream.Dispose();
                 Open(FilePath, !IsMemory);
             }
-        }
-
-        public FileHandler AsMemory()
-        {
-            var newStream = new MemoryStream();
-            long pos = Stream.Position;
-            Stream.Position = 0;
-            Stream.CopyTo(newStream);
-            Stream.Position = pos;
-            newStream.Position = pos;
-            return new FileHandler(newStream) { Offset = Offset };
         }
 
         public FileHandler WithOffset(long offset)
@@ -516,16 +503,6 @@ namespace RszTool
             FillBytes(value, length);
         }
 
-        public static string MarshalStringTrim(string text)
-        {
-            int n = text.IndexOf('\0');
-            if (n != -1)
-            {
-                text = text.Substring(0, n);
-            }
-            return text;
-        }
-
         private static string AsciiGetString(Span<byte> buffer)
         {
 #if !NET5_0_OR_GREATER
@@ -627,21 +604,6 @@ namespace RszTool
             }
             Seek(jumpBack ? originPos : originPos + result.Length * 2 + 2);
             return result;
-        }
-
-        public int ReadWStringLength(long pos = -1, int maxLen = -1, bool jumpBack = true)
-        {
-            long originPos = Tell();
-            if (pos != -1) Seek(pos);
-            int length = 0;
-            char newByte = ReadChar();
-            while (newByte != 0)
-            {
-                length++;
-                newByte = ReadChar();
-            }
-            if (jumpBack) Seek(originPos);
-            return length;
         }
 
         public bool WriteWString(string text)
@@ -818,85 +780,6 @@ namespace RszTool
             return true;
         }
 
-        /// <summary>查找字节数组</summary>
-        public long FindBytes(byte[] pattern, in SearchParam param = default)
-        {
-            const int PAGE_SIZE = 8192;
-            byte[] buffer = new byte[PAGE_SIZE];
-            long addr = param.start;
-            int sizeAligned = pattern.Length; // 数据大小对齐4字节
-
-            if ((sizeAligned & 3) != 0)
-            {
-                sizeAligned += 4 - (sizeAligned & 3);
-            }
-
-            long end = param.end;
-            if (end == -1)
-            {
-                end = FileSize();
-            }
-
-            searcher ??= new();
-            searcher.Update(pattern, param.wildcard);
-
-            while (addr < end)
-            {
-                int readCount = ReadBytes(addr, buffer, PAGE_SIZE);
-                if (readCount != 0)
-                {
-                    int result = searcher.Search(buffer, 0, readCount, param.ordinal);
-                    if (result != -1)
-                    {
-                        return addr + result;
-                    }
-                }
-                addr += PAGE_SIZE - sizeAligned;
-            }
-
-            return -1;
-        }
-
-        public long FindFirst(byte[] pattern, in SearchParam param = default)
-        {
-            return FindBytes(pattern, param);
-        }
-
-        public long FindFirst(string pattern, in SearchParam param = default, Encoding? encoding = null)
-        {
-            encoding ??= Encoding.Unicode;
-            return FindBytes(encoding.GetBytes(pattern), param);
-        }
-
-        public long FindFirst<T>(T pattern, in SearchParam param = default) where T : struct
-        {
-            return FindBytes(MemoryUtils.StructureRefToBytes(ref pattern), param);
-        }
-
-        public void InsertBytes(Span<byte> buffer, long position)
-        {
-            var stream = Stream;
-            // 将当前位置保存到临时变量中
-            long currentPosition = stream.Position;
-
-            // 将流的位置设置为插入点
-            stream.Position = position;
-
-            // 将后续数据读取到临时缓冲区
-            byte[] tempBuffer = new byte[stream.Length - position];
-            int bytesRead = stream.Read(tempBuffer, 0, tempBuffer.Length);
-
-            // 将插入数据写入到流中
-            stream.Position = position;
-            stream.Write(buffer);
-
-            // 将后续数据写入到流中
-            stream.Write(tempBuffer, 0, bytesRead);
-
-            // 将流的位置恢复到原始位置
-            stream.Position = currentPosition;
-        }
-
         public string ReadOffsetAsciiString()
         {
             return ReadAsciiString(ReadInt64());
@@ -955,36 +838,6 @@ namespace RszTool
         public void StringTableFlushOffsets()
         {
             StringTable?.FlushOffsets(this);
-        }
-
-        public void OffsetContentTableAdd(Action<FileHandler> write)
-        {
-            OffsetContentTable ??= new();
-            OffsetContentTable.Add(write, Tell());
-        }
-
-        /// <summary>
-        /// 写入字符串表字符串和偏移
-        /// </summary>
-        public void OffsetContentTableFlush()
-        {
-            OffsetContentTable?.Flush(this);
-        }
-
-        /// <summary>
-        /// 写入字符串表的字符串
-        /// </summary>
-        public void OffsetContentTableWriteContents()
-        {
-            OffsetContentTable?.WriteContents(this);
-        }
-
-        /// <summary>
-        /// 写入字符串表的偏移，并清空数据
-        /// </summary>
-        public void OffsetContentTableFlushOffsets()
-        {
-            OffsetContentTable?.FlushOffsets(this);
         }
     }
 
@@ -1088,151 +941,5 @@ namespace RszTool
         public IEnumerator<StringTableItem> GetEnumerator() => Items.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
-    }
-
-
-    public class OffsetContent
-    {
-        public long OffsetStart { get; set; }
-        public long Offset { get; set; }
-        public Action<FileHandler> Write { get; set; }
-
-        public OffsetContent(Action<FileHandler> write)
-        {
-            Write = write;
-        }
-    }
-
-
-    public class OffsetContentTable : IEnumerable<OffsetContent>
-    {
-        public List<OffsetContent> Items { get; } = new();
-        public int Count => Items.Count;
-
-        public void Clear()
-        {
-            Items.Clear();
-        }
-
-        public void Add(Action<FileHandler> write, long offset)
-        {
-            var item = new OffsetContent(write)
-            {
-                OffsetStart = offset
-            };
-            Items.Add(item);
-        }
-
-        public void Flush(FileHandler handler)
-        {
-            if (Count == 0) return;
-            foreach (var item in Items)
-            {
-                item.Offset = handler.Tell();
-                handler.WriteInt64(item.OffsetStart, item.Offset);
-                item.Write(handler);
-            }
-            Clear();
-        }
-
-        public void WriteContents(FileHandler handler)
-        {
-            if (Count == 0) return;
-            foreach (var item in Items)
-            {
-                item.Offset = handler.Tell();
-                item.Write(handler);
-            }
-        }
-
-        public void FlushOffsets(FileHandler handler)
-        {
-            if (Count == 0) return;
-            foreach (var item in Items)
-            {
-                if (item.Offset == -1)
-                {
-                    throw new Exception($"Offset of {item} not set");
-                }
-                handler.WriteInt64(item.OffsetStart, item.Offset);
-            }
-            Clear();
-        }
-
-        public IEnumerator<OffsetContent> GetEnumerator() => Items.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
-    }
-
-
-    public interface IFileHandlerAction
-    {
-        FileHandler Handler { get; }
-        bool Success { get; }
-        bool Handle<T>(ref T value) where T : struct;
-        IFileHandlerAction HandleOffsetWString(ref string value);
-    }
-
-
-    public static class IFileHandlerActionExtension
-    {
-        public static IFileHandlerAction? Then<T>(this IFileHandlerAction action, ref T value) where T : struct
-        {
-            if (action.Handle(ref value))
-            {
-                return action;
-            }
-            return null;
-        }
-
-        public static IFileHandlerAction? Then<T>(this IFileHandlerAction action, bool condition, ref T value) where T : struct
-        {
-            return condition ? action.Then(ref value) : action;
-        }
-
-        public static IFileHandlerAction? Skip(this IFileHandlerAction action, long skip)
-        {
-            action.Handler.Skip(skip);
-            return action;
-        }
-    }
-
-
-    public struct FileHandlerRead(FileHandler handler) : IFileHandlerAction
-    {
-        public FileHandler Handler { get; set; } = handler;
-        public int LastResult { get; set; } = -1;
-        public readonly bool Success => LastResult != 0;
-
-        public bool Handle<T>(ref T value) where T : struct
-        {
-            LastResult = Handler.Read(ref value);
-            return Success;
-        }
-
-        public readonly IFileHandlerAction HandleOffsetWString(ref string value)
-        {
-            Handler.ReadOffsetWString(out value);
-            return this;
-        }
-    }
-
-
-    public struct FileHandlerWrite(FileHandler handler) : IFileHandlerAction
-    {
-        public FileHandler Handler { get; set; } = handler;
-        public bool Success { get; set; }
-
-        public bool Handle<T>(ref T value) where T : struct
-        {
-            Success = Handler.Write(ref value);
-            return Success;
-        }
-
-        public readonly IFileHandlerAction HandleOffsetWString(ref string value)
-        {
-            Handler.WriteOffsetWString(value);
-            return this;
-        }
     }
 }
