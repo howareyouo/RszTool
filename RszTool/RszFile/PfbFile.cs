@@ -320,22 +320,6 @@ namespace RszTool
             }
         }
 
-        /// <summary>
-        /// 收集GameObject以及子物体的实例和组件实例
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="rszInstances"></param>
-        public static void CollectGameObjectInstances(GameObjectData gameObject, List<RszInstance> rszInstances)
-            => GameObjectTree.CollectInstances(gameObject, rszInstances);
-
-        /// <summary>
-        /// 迭代GameObject以及子物体的实例和组件实例
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <returns></returns>
-        public static IEnumerable<RszInstance> IterGameObjectInstances(GameObjectData gameObject)
-            => GameObjectTree.IterInstances(gameObject);
-
         public IEnumerable<GameObjectData> IterGameObjects(GameObjectData? parent = null, bool includeChildren = false)
         {
             var items = parent?.Children ?? GameObjectDatas;
@@ -374,7 +358,7 @@ namespace RszTool
             {
                 foreach (var gameObjectData in GameObjectDatas)
                 {
-                    CollectGameObjectInstances(gameObjectData, rszInstances);
+                    GameObjectTree.CollectInstances(gameObjectData, rszInstances);
                 }
             }
 
@@ -485,7 +469,7 @@ namespace RszTool
 
             // 为了可视化重新排序号，否则会显示序号是-1，但实际上保存的时候的序号和现在编号的可能不一致
             // 所以要考虑这步操作是否有必要
-            RSZ!.FixInstanceListIndex(IterGameObjectInstances(newGameObject));
+            RSZ!.FixInstanceListIndex(GameObjectTree.IterInstances(newGameObject));
 
             if (isDuplicate)
             {
