@@ -510,39 +510,5 @@ namespace RszTool
         {
             return ImportGameObject(gameObject, gameObject.Parent, true);
         }
-
-        /// <summary>
-        /// 添加组件
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="className"></param>
-        public void AddComponent(IGameObjectData gameObject, string className)
-        {
-            var component = RSZ!.CreateInstance(className);
-            gameObject.Components.Add(component);
-            StructChanged = true;
-        }
-
-        /// <summary>
-        /// 添加组件
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="component"></param>
-        public void AddComponent(IGameObjectData gameObject, RszInstance component)
-        {
-            gameObject.Components.Add(component);
-            StructChanged = true;
-        }
-
-        /// <summary>
-        /// 移除组件
-        /// </summary>
-        /// <param name="gameObject"></param>
-        /// <param name="component"></param>
-        public void RemoveComponent(IGameObjectData gameObject, RszInstance component)
-        {
-            gameObject.Components.Remove(component);
-            StructChanged = true;
-        }
     }
 }
