@@ -21,6 +21,7 @@ namespace RszTool.App.ViewModels
         public ObservableCollection<HeaderedItemViewModel> Items { get; } = new();
         public HeaderedItemViewModel? SelectedTabItem { get; set; }
         public FileExplorerViewModel FileExplorerViewModel { get; } = new();
+        public IReadOnlyList<GameVersionItem> GameVersions { get; }
 
         private BaseRszFileViewModel? CurrentFile =>
             SelectedTabItem is FileTabItemViewModel fileTabItemViewModel ?
@@ -65,6 +66,7 @@ namespace RszTool.App.ViewModels
                 FileExplorerViewModel.Folders.Add(new(Directory.GetCurrentDirectory()));
             }
             FileExplorerViewModel.OnFileSelected += f => OpenFile(f.Path);
+            GameVersions = RszDefines.GameNames.Select(name => new GameVersionItem(this, name)).ToList();
         }
 
         /// <summary>
@@ -322,5 +324,34 @@ namespace RszTool.App.ViewModels
         {
             Header = FileViewModel.FileName + (FileViewModel.Changed ? "*" : "");
         }
+    }
+
+
+    public class GameVersionItem(MainWindowModel model, GameName name) : INotifyPropertyChanged
+    {
+        public GameName Name { get; } = name;
+
+        public string Header => Name.ToString();
+
+        public bool IsChecked
+        {
+            get => MainWindowModel.SaveData.GameName == Name;
+            set
+            {
+                if (!value) return;
+                MainWindowModel.SaveData.GameName = Name;
+                foreach (var item in model.GameVersions)
+                {
+                    item.NotifyIsCheckedChanged();
+                }
+            }
+        }
+
+        public void NotifyIsCheckedChanged()
+        {
+            PropertyChanged?.Invoke(this, new(nameof(IsChecked)));
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
     }
 }

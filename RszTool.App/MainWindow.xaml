@@ -7,7 +7,6 @@
         xmlns:views="clr-namespace:RszTool.App.Views"
         xmlns:viewmodels="clr-namespace:RszTool.App.ViewModels"
         xmlns:res="clr-namespace:RszTool.App.Resources"
-        xmlns:rsztool="clr-namespace:RszTool;assembly=RszTool"
         xmlns:dragablz="clr-namespace:Dragablz;assembly=Dragablz"
         xmlns:dockablz="clr-namespace:Dragablz.Dockablz;assembly=Dragablz"
         mc:Ignorable="d"
@@ -57,6 +56,12 @@
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
+
+            <Style TargetType="MenuItem" x:Key="GameNameMenuItemStyle">
+                <Setter Property="Header" Value="{Binding Header}" />
+                <Setter Property="IsCheckable" Value="True" />
+                <Setter Property="IsChecked" Value="{Binding IsChecked, Mode=TwoWay}" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     <Window.InputBindings>
@@ -76,7 +81,6 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -136,22 +140,19 @@
                     <MenuItem.Header><Ellipse Width="10" Height="10" Fill="Purple" /></MenuItem.Header>
                 </MenuItem>
             </MenuItem>
+            <MenuItem Header="{res:Text Options}">
+                <MenuItem Header="{res:Text GameVersion}">
+                    <MenuItem ItemsSource="{Binding GameVersions}"
+                              ItemContainerStyle="{StaticResource GameNameMenuItemStyle}" />
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="{res:Text Dark}" IsCheckable="True" IsChecked="{Binding IsDarkTheme}" />
+            </MenuItem>
             <MenuItem Header="{res:Text Help}">
                 <MenuItem Header="{res:Text About}" Command="{Binding OpenAbout}" />
             </MenuItem>
         </Menu>
-        <Grid Grid.Row="1" Margin="5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="Game version" Margin="0 0 5 0" VerticalAlignment="Center" />
-            <ComboBox ItemsSource="{x:Static rsztool:RszDefines.GameNames}" Grid.Column="1" SelectedValue="{Binding SaveData.GameName}" />
-            <ToggleButton Content="{res:Text Dark}" Grid.Column="3" IsChecked="{Binding IsDarkTheme}" />
-        </Grid>
-        <Grid Grid.Row="2" Cursor="">
+        <Grid Grid.Row="1" Cursor="">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200" MinWidth="200" />
                 <ColumnDefinition Width="Auto" />
