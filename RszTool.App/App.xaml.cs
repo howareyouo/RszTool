@@ -14,6 +14,10 @@ namespace RszTool.App
     {
         public App()
         {
+            // 双击关联文件时进程由 explorer 启动，工作目录不一定是 exe 目录，
+            // 而 rsz*.json、Data 和 SaveData 都按相对路径寻址，统一切到 exe 目录
+            Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
             SaveData? saveData = null;
             if (File.Exists(SaveData.JsonPath))
             {
