@@ -113,7 +113,7 @@ namespace RszTool
                 set => parentRef = value != null ? new(value) : null;
             }
 
-            public string? Name => (Instance?.GetFieldValue("v0") ?? Instance?.GetFieldValue("Name")) as string;
+            public string? Name => RszUtils.GetGameObjectName(Instance);
 
             public int? ObjectId => Info?.Data.objectId;
 
@@ -327,16 +327,9 @@ namespace RszTool
             {
                 yield break;
             }
-            foreach (var item in items)
+            foreach (var item in GameObjectTree.IterObjects(items, includeChildren))
             {
                 yield return item;
-                if (includeChildren)
-                {
-                    foreach (var child in IterGameObjects(item, includeChildren))
-                    {
-                        yield return child;
-                    }
-                }
             }
         }
 

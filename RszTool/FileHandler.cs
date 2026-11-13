@@ -620,11 +620,8 @@ namespace RszTool
 
         public T Read<T>(long tell, bool jumpBack = true) where T : struct
         {
-            long pos = Tell();
-            Seek(tell);
-            T value = Read<T>();
-            if (jumpBack) Seek(pos);
-            return value;
+            using var defer = SeekJumpBack(tell, jumpBack);
+            return Read<T>();
         }
 
         public int Read<T>(ref T value) where T : struct
@@ -634,11 +631,8 @@ namespace RszTool
 
         public int Read<T>(long tell, ref T value, bool jumpBack = true) where T : struct
         {
-            long pos = Tell();
-            Seek(tell);
-            int result = Read(ref value);
-            if (jumpBack) Seek(pos);
-            return result;
+            using var defer = SeekJumpBack(tell, jumpBack);
+            return Read(ref value);
         }
 
         public bool Write<T>(T value) where T : struct
@@ -649,11 +643,8 @@ namespace RszTool
 
         public bool Write<T>(long tell, T value, bool jumpBack = true) where T : struct
         {
-            long pos = Tell();
-            Seek(tell);
-            bool result = Write(value);
-            if (jumpBack) Seek(pos);
-            return result;
+            using var defer = SeekJumpBack(tell, jumpBack);
+            return Write(value);
         }
 
         public bool Write<T>(ref T value) where T : struct
@@ -664,11 +655,8 @@ namespace RszTool
 
         public bool Write<T>(long tell, ref T value, bool jumpBack = true) where T : struct
         {
-            long pos = Tell();
-            Seek(tell);
-            bool result = Write(ref value);
-            if (jumpBack) Seek(pos);
-            return result;
+            using var defer = SeekJumpBack(tell, jumpBack);
+            return Write(ref value);
         }
 
         /// <summary>

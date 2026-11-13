@@ -8,6 +8,24 @@ namespace RszTool
         }
 
         /// <summary>
+        /// 游戏对象的显示名，不同版本分别用 v0 / Name 字段
+        /// </summary>
+        public static string? GetGameObjectName(RszInstance? instance)
+        {
+            return (instance?.GetFieldValue("v0") ?? instance?.GetFieldValue("Name")) as string;
+        }
+
+        /// <summary>
+        /// 改写游戏对象名，v0 不存在时退回 Name 字段
+        /// </summary>
+        public static void SetGameObjectName(RszInstance? instance, string? value)
+        {
+            if (value == null) return;
+            if (instance?.SetFieldValue("v0", value) == true) return;
+            instance?.SetFieldValue("Name", value);
+        }
+
+        /// <summary>
         /// 添加RSZ中用到的UserData
         /// </summary>
         /// <param name="userdataInfos"></param>

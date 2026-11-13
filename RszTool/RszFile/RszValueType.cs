@@ -8,7 +8,7 @@ namespace RszTool.via
     {
         public static void CheckIndex(int index, int length)
         {
-            if (index < 0 || index >= length) throw new IndexOutOfRangeException($"Index must be 0..{length-1}, got {index}");
+            if (index < 0 || index >= length) throw IndexError(index, length);
         }
 
         public static IndexOutOfRangeException IndexError(int index, int length)

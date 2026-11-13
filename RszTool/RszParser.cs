@@ -83,47 +83,37 @@ namespace RszTool
             if (!File.Exists(patchJsonPath)) return;
             using FileStream fileStream = File.OpenRead(patchJsonPath);
             var dict = JsonSerializer.Deserialize<Dictionary<string, RszClassPatch>>(fileStream);
-            if (dict != null)
+            if (dict == null) return;
+            foreach (var item in dict)
             {
-                foreach (var item in dict)
+                var classPatch = item.Value;
+                classPatch.Name = item.Key;
+                if (!classNameDict.TryGetValue(classPatch.Name, out var rszClass)) continue;
+                if (!string.IsNullOrEmpty(classPatch.ReplaceName))
                 {
-                    var classPatch = item.Value;
-                    classPatch.Name = item.Key;
-                    if (classNameDict.TryGetValue(classPatch.Name, out var rszClass))
+                    rszClass.name = classPatch.ReplaceName!;
+                }
+                if (classPatch.FieldPatches == null) continue;
+                foreach (var fieldPatch in classPatch.FieldPatches)
+                {
+                    if (rszClass.GetField(fieldPatch.Name!) is not RszField rszField) continue;
+                    if (!string.IsNullOrEmpty(fieldPatch.ReplaceName))
                     {
-                        if (!string.IsNullOrEmpty(classPatch.ReplaceName))
-                        {
-                            rszClass.name = classPatch.ReplaceName!;
-                        }
-                        if (classPatch.FieldPatches != null)
-                        {
-                            foreach (var fieldPatch in classPatch.FieldPatches)
-                            {
-                                if (rszClass.GetField(fieldPatch.Name!) is RszField rszField)
-                                {
-                                    if (!string.IsNullOrEmpty(fieldPatch.ReplaceName))
-                                    {
-                                        rszField.name = fieldPatch.ReplaceName!;
-                                    }
-                                    if (!string.IsNullOrEmpty(fieldPatch.OriginalType))
-                                    {
-                                        rszField.original_type = fieldPatch.OriginalType!;
-                                    }
-                                    if (fieldPatch.Type != RszFieldType.ukn_error)
-                                    {
-                                        if (rszField.type != RszFieldType.Data)
-                                        {
-                                            Console.WriteLine(
-                                                $"Warning: {classPatch.Name}.{fieldPatch.Name} change type " +
-                                                $"from {rszField.type} to {fieldPatch.Type}");
-                                        }
-                                        rszField.type = fieldPatch.Type;
-                                        rszField.IsTypeInferred = true;
-                                    }
-                                }
-                            }
-                        }
+                        rszField.name = fieldPatch.ReplaceName!;
                     }
+                    if (!string.IsNullOrEmpty(fieldPatch.OriginalType))
+                    {
+                        rszField.original_type = fieldPatch.OriginalType!;
+                    }
+                    if (fieldPatch.Type == RszFieldType.ukn_error) continue;
+                    if (rszField.type != RszFieldType.Data)
+                    {
+                        Console.WriteLine(
+                            $"Warning: {classPatch.Name}.{fieldPatch.Name} change type " +
+                            $"from {rszField.type} to {fieldPatch.Type}");
+                    }
+                    rszField.type = fieldPatch.Type;
+                    rszField.IsTypeInferred = true;
                 }
             }
         }

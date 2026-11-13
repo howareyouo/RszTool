@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -133,10 +132,9 @@ namespace RszTool.App.ViewModels
             {
                 if (instance.RSZUserData != null) return false;
                 bool matched = false;
-                var fields = instance.Fields;
                 for (int i = 0; i < instance.Fields.Length; i++)
                 {
-                    RszField? field = instance.Fields[i];
+                    RszField field = instance.Fields[i];
                     if (field.array)
                     {
                         List<object> list = (List<object>)instance.Values[i];

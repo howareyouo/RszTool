@@ -1,4 +1,3 @@
-using System.Text;
 using RszTool.Common;
 
 namespace RszTool
@@ -228,19 +227,12 @@ namespace RszTool
 
         public string InstanceStringify(RszInstance instance)
         {
-            StringBuilder sb = new();
-            sb.AppendLine(instance.Stringify(InstanceList));
-            return sb.ToString();
+            return instance.Stringify(InstanceList) + Environment.NewLine;
         }
 
         public string ObjectsStringify()
         {
-            StringBuilder sb = new();
-            foreach (var instance in ObjectList)
-            {
-                sb.AppendLine(instance.Stringify(InstanceList));
-            }
-            return sb.ToString();
+            return string.Concat(ObjectList.Select(x => x.Stringify(InstanceList) + Environment.NewLine));
         }
 
         private void FixObjectTableInstanceId(RszInstance instance)
@@ -343,41 +335,40 @@ namespace RszTool
         public void InstanceUnflatten(RszInstance instance)
         {
             if (instance.RSZUserData != null) return;
+
+            void CheckTypeInferred(int instanceId, RszField field)
+            {
+                if (instanceId >= instance.Index && field.IsTypeInferred)
+                {
+                    // TODO: may detect error, should roll back
+                    field.type = RszFieldType.S32;
+                    throw new RszRetryOpenException($"Detected {instance.RszClass.name}.{field.name} as Object before, but seems wrong");
+                }
+            }
+
             var fields = instance.RszClass.fields;
             for (int i = 0; i < fields.Length; i++)
             {
                 var field = fields[i];
-                if (field.IsReference)
+                if (!field.IsReference) continue;
+                if (field.array)
                 {
-                    if (field.array)
+                    var items = (List<object>)instance.Values[i];
+                    for (int j = 0; j < items.Count; j++)
                     {
-                        var items = (List<object>)instance.Values[i];
-                        for (int j = 0; j < items.Count; j++)
+                        if (items[j] is int instanceId)
                         {
-                            if (items[j] is int instanceId)
-                            {
-                                if (instanceId >= instance.Index && field.IsTypeInferred)
-                                {
-                                    // TODO: may detect error, should roll back
-                                    field.type = RszFieldType.S32;
-                                    throw new RszRetryOpenException($"Detected {instance.RszClass.name}.{field.name} as Object before, but seems wrong");
-                                }
-                                items[j] = InstanceList[instanceId];
-                                InstanceUnflatten(InstanceList[instanceId]);
-                            }
+                            CheckTypeInferred(instanceId, field);
+                            items[j] = InstanceList[instanceId];
+                            InstanceUnflatten(InstanceList[instanceId]);
                         }
                     }
-                    else if (instance.Values[i] is int instanceId)
-                    {
-                        if (instanceId >= instance.Index && field.IsTypeInferred)
-                        {
-                            // TODO: may detect error, should roll back
-                            field.type = RszFieldType.S32;
-                            throw new RszRetryOpenException($"Detected {instance.RszClass.name}.{field.name} as Object before, but seems wrong");
-                        }
-                        instance.Values[i] = InstanceList[instanceId];
-                        InstanceUnflatten(InstanceList[instanceId]);
-                    }
+                }
+                else if (instance.Values[i] is int instanceId)
+                {
+                    CheckTypeInferred(instanceId, field);
+                    instance.Values[i] = InstanceList[instanceId];
+                    InstanceUnflatten(InstanceList[instanceId]);
                 }
             }
         }

@@ -670,7 +670,7 @@ namespace RszTool
                     }
                     if (value is int index && instances != null)
                     {
-                        instances[(int)value].Stringify(sb, instances, indent + 2);
+                        instances[index].Stringify(sb, instances, indent + 2);
                     }
                     else if (value is RszInstance instance)
                     {

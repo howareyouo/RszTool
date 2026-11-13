@@ -254,15 +254,22 @@ namespace RszTool.App.ViewModels
             }
         }
 
+        /// <summary>
+        /// 剪贴板里的普通字段能否粘贴到目标字段，类型不一致时报错
+        /// </summary>
+        private static bool CheckNormalFieldType(RszField target)
+        {
+            var source = RszClipboard.NormalField;
+            if (source == null || source.type == target.type) return true;
+            MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, source.type, target.type));
+            return false;
+        }
+
         private void OnPasteNormalField(object arg)
         {
             if (arg is RszFieldNormalViewModel item && RszClipboard.NormalField != null && RszClipboard.NormalValue != null)
             {
-                if (RszClipboard.NormalField.type != item.Field.type)
-                {
-                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, RszClipboard.NormalField.type, item.Field.type));
-                    return;
-                }
+                if (!CheckNormalFieldType(item.Field)) return;
                 item.Value = RszClipboard.NormalValue;
                 OnEdited();
             }
@@ -370,11 +377,7 @@ namespace RszTool.App.ViewModels
             else if (arg is RszFieldArrayNormalItemViewModel normalItem
                 && RszClipboard.NormalField != null && RszClipboard.NormalValue != null)
             {
-                if (RszClipboard.NormalField.type != normalItem.Field.type)
-                {
-                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, RszClipboard.NormalField.type, normalItem.Field.type));
-                    return;
-                }
+                if (!CheckNormalFieldType(normalItem.Field)) return;
                 rsz.ArrayInsertItem(normalItem.Values, RszClipboard.NormalValue, normalItem.Index + 1);
                 OnEdited(normalItem.Array);
             }
@@ -396,11 +399,7 @@ namespace RszTool.App.ViewModels
             else if (arg is RszFieldArrayNormalItemViewModel normalItem
                 && RszClipboard.NormalField != null && RszClipboard.NormalValue != null)
             {
-                if (RszClipboard.NormalField.type != normalItem.Field.type)
-                {
-                    MessageBoxUtils.Error(string.Format(Texts.RszClassMismatch, RszClipboard.NormalField.type, normalItem.Field.type));
-                    return;
-                }
+                if (!CheckNormalFieldType(normalItem.Field)) return;
                 normalItem.Value = RszClipboard.NormalValue;
                 OnEdited();
             }

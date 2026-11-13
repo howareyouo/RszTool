@@ -10,15 +10,7 @@ namespace RszTool
         /// </summary>
         public static void CollectInstances(IGameObjectData gameObject, List<RszInstance> rszInstances)
         {
-            rszInstances.Add(gameObject.Instance!);
-            foreach (var item in gameObject.Components)
-            {
-                rszInstances.Add(item);
-            }
-            foreach (var child in gameObject.GetChildren())
-            {
-                CollectInstances(child, rszInstances);
-            }
+            rszInstances.AddRange(IterInstances(gameObject));
         }
 
         /// <summary>
@@ -43,8 +35,8 @@ namespace RszTool
         /// <summary>
         /// 迭代对象，可选是否带上子对象
         /// </summary>
-        public static IEnumerable<IGameObjectData> IterObjects(
-            IEnumerable<IGameObjectData>? items, bool includeChildren = false)
+        public static IEnumerable<T> IterObjects<T>(
+            IEnumerable<T>? items, bool includeChildren = false) where T : IGameObjectData
         {
             if (items == null) yield break;
             foreach (var item in items)
@@ -52,7 +44,7 @@ namespace RszTool
                 yield return item;
                 if (includeChildren)
                 {
-                    foreach (var child in IterObjects(item.GetChildren(), includeChildren))
+                    foreach (var child in IterObjects(item.GetChildren().Cast<T>(), includeChildren))
                     {
                         yield return child;
                     }

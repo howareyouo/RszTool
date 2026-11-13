@@ -172,13 +172,10 @@ namespace RszTool.App.Converters
     [ValueConversion(typeof(byte[]), typeof(string))]
     public class BytesConverter : IValueConverter
     {
-        private int byteCount;
-
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
             if (value is byte[] bytes)
             {
-                byteCount = bytes.Length;
                 return ConvertUtils.ToHexString(bytes, " ");
             }
             else

@@ -139,13 +139,8 @@ namespace RszTool
 
             public string? Name
             {
-                get => (Instance?.GetFieldValue("v0") ?? Instance?.GetFieldValue("Name")) as string;
-                set
-                {
-                    if (value == null) return;
-                    if (Instance?.SetFieldValue("v0", value) == true) return;
-                    Instance?.SetFieldValue("Name", value);
-                }
+                get => RszUtils.GetGameObjectName(Instance);
+                set => RszUtils.SetGameObjectName(Instance, value);
             }
 
             public override string ToString()
@@ -179,13 +174,8 @@ namespace RszTool
 
             public string? Name
             {
-                get => (Instance?.GetFieldValue("v0") ?? Instance?.GetFieldValue("Name")) as string;
-                set
-                {
-                    if (value == null) return;
-                    if (Instance?.SetFieldValue("v0", value) == true) return;
-                    Instance?.SetFieldValue("Name", value);
-                }
+                get => RszUtils.GetGameObjectName(Instance);
+                set => RszUtils.SetGameObjectName(Instance, value);
             }
 
             public int? ObjectId => Info?.Data.objectId;
@@ -492,15 +482,7 @@ namespace RszTool
         /// <param name="rszInstances"></param>
         public static void CollectFolderGameObjectInstances(FolderData folder, List<RszInstance> rszInstances)
         {
-            rszInstances.Add(folder.Instance!);
-            foreach (var gameObject in folder.GameObjects)
-            {
-                GameObjectTree.CollectInstances(gameObject, rszInstances);
-            }
-            foreach (var child in folder.Children)
-            {
-                CollectFolderGameObjectInstances(child, rszInstances);
-            }
+            rszInstances.AddRange(IterFolderGameObjectInstances(folder));
         }
 
         /// <summary>
@@ -754,16 +736,9 @@ namespace RszTool
             }
             foreach (var folder in folders)
             {
-                foreach (var gameObject in folder.GameObjects)
+                foreach (var gameObject in GameObjectTree.IterObjects(folder.GameObjects, includeChildren))
                 {
                     yield return gameObject;
-                    if (includeChildren)
-                    {
-                        foreach (var child in IterGameObjects(gameObject, includeChildren))
-                        {
-                            yield return child;
-                        }
-                    }
                 }
             }
             foreach (var folder in folders)
@@ -782,16 +757,9 @@ namespace RszTool
             {
                 yield break;
             }
-            foreach (var item in items)
+            foreach (var item in GameObjectTree.IterObjects(items, includeChildren))
             {
                 yield return item;
-                if (includeChildren)
-                {
-                    foreach (var child in IterGameObjects(item, includeChildren))
-                    {
-                        yield return child;
-                    }
-                }
             }
         }
 
@@ -855,7 +823,17 @@ namespace RszTool
         /// <param name="rootGameObject"></param>
         private void FixGameObjectRef(GameObjectData rootGameObject)
         {
-            Dictionary<Guid, List<GameObjectRefData>>? gameObjectRefDatas = null;
+            Dictionary<Guid, List<GameObjectRefData>> gameObjectRefDatas = new();
+
+            void AddRefData(Guid guid, GameObjectRefData refData)
+            {
+                if (!gameObjectRefDatas.TryGetValue(guid, out var refDatas))
+                {
+                    gameObjectRefDatas[guid] = refDatas = new();
+                }
+                refDatas.Add(refData);
+            }
+
             // record GameObjectRef
             foreach (var item in GameObjectTree.IterInstances(rootGameObject))
             {
@@ -867,37 +845,20 @@ namespace RszTool
                     for (int i = 0; i < fields.Length; i++)
                     {
                         RszField field = fields[i];
-                        if (field.type == RszFieldType.GameObjectRef)
+                        if (field.type != RszFieldType.GameObjectRef) continue;
+                        if (field.array)
                         {
-                            gameObjectRefDatas ??= new();
-                            if (field.array)
+                            var items = (List<object>)instance.Values[i];
+                            for (int j = 0; j < items.Count; j++)
                             {
-                                var items = (List<object>)instance.Values[i];
-                                for (int j = 0; j < items.Count; j++)
-                                {
-                                    Guid guid = (Guid)items[j];
-                                    if (guid != Guid.Empty)
-                                    {
-                                        if (!gameObjectRefDatas.TryGetValue(guid, out var refDatas))
-                                        {
-                                            gameObjectRefDatas[guid] = refDatas = new();
-                                        }
-                                        refDatas.Add(new(items, j));
-                                    }
-                                }
+                                Guid guid = (Guid)items[j];
+                                if (guid != Guid.Empty) AddRefData(guid, new(items, j));
                             }
-                            else
-                            {
-                                Guid guid = (Guid)instance.Values[i];
-                                if (guid != Guid.Empty)
-                                {
-                                    if (!gameObjectRefDatas.TryGetValue(guid, out var refDatas))
-                                    {
-                                        gameObjectRefDatas[guid] = refDatas = new();
-                                    }
-                                    refDatas.Add(new(instance.Values, i));
-                                }
-                            }
+                        }
+                        else
+                        {
+                            Guid guid = (Guid)instance.Values[i];
+                            if (guid != Guid.Empty) AddRefData(guid, new(instance.Values, i));
                         }
                     }
                 }
@@ -905,7 +866,7 @@ namespace RszTool
             foreach (var item in IterGameObjects(rootGameObject, true))
             {
                 // fix GameObjectRef
-                if (gameObjectRefDatas != null && item.OriginalGuid != Guid.Empty &&
+                if (item.OriginalGuid != Guid.Empty &&
                     gameObjectRefDatas.TryGetValue(item.OriginalGuid, out var refDatas))
                 {
                     foreach (var refData in refDatas)
