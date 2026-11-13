@@ -30,6 +30,10 @@ namespace RszTool.App
             Loaded += (_, _) =>
             {
                 if (App.Instance.SaveData.Window.Maximized) WindowState = WindowState.Maximized;
+                if (DataContext is MainWindowModel mainWindowModel)
+                {
+                    foreach (string path in App.Instance.StartupFiles) mainWindowModel.TryOpenFile(path);
+                }
             };
             Closing += OnClosing;
         }

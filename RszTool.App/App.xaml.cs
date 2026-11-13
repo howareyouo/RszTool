@@ -27,8 +27,14 @@ namespace RszTool.App
         public static App Instance => (App)Current;
         public SaveData SaveData { get; }
 
+        /// <summary>
+        /// 命令行传入的资源文件，双击关联或拖到 exe 上时使用
+        /// </summary>
+        public IReadOnlyList<string> StartupFiles { get; private set; } = [];
+
         protected override void OnStartup(StartupEventArgs e)
         {
+            StartupFiles = e.Args.Where(IsSupportedFile).ToList();
             base.OnStartup(e);
 
             ThemeManager.Init(SaveData.IsDarkTheme);
@@ -62,6 +68,12 @@ namespace RszTool.App
                     ShowUnhandledException(args.Exception, "Dispatcher.UnhandledException", true);
                 }
             };
+        }
+
+        private static bool IsSupportedFile(string path)
+        {
+            if (!File.Exists(path)) return false;
+            return RszUtils.GetFileType(path) is FileType.user or FileType.pfb or FileType.scn;
         }
 
         public static void ShowUnhandledException(Exception e, string unhandledExceptionType, bool promptUserForShutdown = false)
