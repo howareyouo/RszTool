@@ -26,6 +26,14 @@
             }
         ]
     },
+    "via.render.AmbientOcclusionGeometryElement": {
+        "FieldPatches": [
+            {
+                "Name": "v3",
+                "Type": "S32"
+            }
+        ]
+    },
     "via.physics.Colliders": {
         "FieldPatches": [
             {
