@@ -20,7 +20,7 @@
                 <ResourceDictionary Source="Views/TreeViewStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <DataTemplate DataType="{x:Type dragablz:HeaderedItemViewModel}">
-                <ContentControl Content="{Binding Content}" Margin="4 4 4 4" FontSize="14" />
+                <ContentControl Content="{Binding Content}" Margin="4 4 4 4" />
             </DataTemplate>
 
             <dragablz:DragablzIcon Width="24" Height="24" Margin="0 -8 0 0"
